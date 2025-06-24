@@ -186,7 +186,7 @@ update_ssh_config() {
     local config_file="/etc/ssh/sshd_config"
     
     if grep -q "^#*${key}" "$config_file"; then
-        sed -i "s/^#*${key}.*/${key} ${value}/" "$config_file"
+        sed -i "s|^#*${key}.*|${key} ${value}|" "$config_file"
     else
         echo "${key} ${value}" >> "$config_file"
     fi
