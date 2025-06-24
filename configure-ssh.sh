@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-# ─── Funciones de logging (heredadas) ──────────────────────────
+# ─── Funciones de logging ──────────────────────────────────────
 if [[ -t 1 ]]; then
     RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
     BLUE='\033[1;34m'; CYAN='\033[1;36m'; NC='\033[0m'
@@ -23,14 +23,26 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# ─── Solicitar usuario interactivamente si no está definido ─────
 if [[ -z "${USERNAME:-}" ]]; then
-    error "Variable USERNAME no definida"
-    exit 1
+    echo
+    info "No se ha definido la variable USERNAME"
+    read -rp "Por favor, ingrese el nombre de usuario para configurar SSH: " USERNAME
+    echo
+    
+    if [[ -z "$USERNAME" ]]; then
+        error "Debe especificar un nombre de usuario"
+        exit 1
+    fi
 fi
 
+# ─── Determinar directorio home si no está definido ─────────────
 if [[ -z "${HOME_DIR:-}" ]]; then
-    error "Variable HOME_DIR no definida"
-    exit 1
+    HOME_DIR=$(getent passwd "$USERNAME" | cut -d: -f6)
+    if [[ -z "$HOME_DIR" ]]; then
+        error "No se pudo determinar el directorio home para el usuario $USERNAME"
+        exit 1
+    fi
 fi
 
 # ─── Verificar usuario ─────────────────────────────────────────
