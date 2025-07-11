@@ -37,6 +37,11 @@ if [[ -z "${USERNAME:-}" ]]; then
 fi
 
 # ─── Determinar directorio home si no está definido ─────────────
+if ! getent passwd "$USERNAME" &>/dev/null; then
+    error "Usuario '$USERNAME' no existe"
+    exit 1
+fi
+
 if [[ -z "${HOME_DIR:-}" ]]; then
     HOME_DIR=$(getent passwd "$USERNAME" | cut -d: -f6)
     if [[ -z "$HOME_DIR" ]]; then
@@ -46,11 +51,6 @@ if [[ -z "${HOME_DIR:-}" ]]; then
 fi
 
 # ─── Verificar usuario ─────────────────────────────────────────
-if ! getent passwd "$USERNAME" &>/dev/null; then
-    error "Usuario '$USERNAME' no existe"
-    exit 1
-fi
-
 if [[ "$USERNAME" == "root" ]]; then
     error "No se permite configurar SSH para root"
     exit 1
@@ -204,7 +204,8 @@ update_ssh_config "ClientAliveCountMax" "2"
 update_ssh_config "Protocol" "2"
 
 # Configuraciones adicionales de seguridad
-cat >> /etc/ssh/sshd_config << 'EOF'
+if ! grep -q "X11Forwarding no" /etc/ssh/sshd_config; then
+    cat >> /etc/ssh/sshd_config << 'EOF'
 
 # Configuración adicional de seguridad
 X11Forwarding no
@@ -213,6 +214,7 @@ AllowTcpForwarding no
 PermitTunnel no
 GatewayPorts no
 EOF
+fi
 
 ok "Configuración SSH aplicada"
 
